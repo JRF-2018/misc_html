@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>信用創造ダイナミクス v2</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;700&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --bg: #0a0c0f;
+    --panel: #10141a;
+    --border: #1e2530;
+    --accent1: #00e5ff;
+    --accent2: #ff6b35;
+    --accent3: #7fff6b;
+    --accent4: #ffcc00;
+    --text: #c8d4e0;
+    --muted: #4a5568;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif JP', serif;
+    min-height: 100vh;
+    padding: 2rem;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    color: var(--accent1);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 2rem;
+    letter-spacing: 0.1em;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 1.5rem;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 1.2rem;
+    border-radius: 2px;
+  }
+
+  .panel h2 {
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .param-group { margin-bottom: 1.3rem; }
+
+  .param-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.3rem;
+  }
+
+  .param-name { font-size: 0.8rem; color: var(--text); }
+
+  .param-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--accent1);
+  }
+
+  .param-desc {
+    font-size: 0.63rem;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+    line-height: 1.5;
+  }
+
+  input[type=range] {
+    width: 100%;
+    height: 3px;
+    -webkit-appearance: none;
+    background: var(--border);
+    outline: none;
+    border-radius: 2px;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--accent1);
+    cursor: pointer;
+  }
+
+  .run-btn {
+    width: 100%;
+    padding: 0.8rem;
+    background: transparent;
+    border: 1px solid var(--accent1);
+    color: var(--accent1);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 0.5rem;
+    text-transform: uppercase;
+  }
+
+  .run-btn:hover { background: var(--accent1); color: var(--bg); }
+
+  .charts-area { display: grid; gap: 1.5rem; }
+
+  .chart-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 1.2rem;
+    border-radius: 2px;
+  }
+
+  .chart-panel h2 {
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  canvas { max-height: 190px; }
+
+  .equation-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 1rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    line-height: 2;
+    margin-top: 1rem;
+  }
+
+  .eq-highlight { color: var(--accent3); }
+  .eq-note { color: #a0aec0; font-style: italic; }
+
+  .status-bar {
+    display: flex;
+    gap: 1.2rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .status-item { display: flex; flex-direction: column; gap: 0.2rem; }
+
+  .status-key {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .status-val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.0rem;
+    font-weight: bold;
+  }
+
+  .collapse { color: var(--accent2); }
+  .stable   { color: var(--accent3); }
+  .expand   { color: var(--accent1); }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+
+  .concept-note {
+    background: #0d1f0d;
+    border: 1px solid #1a3a1a;
+    border-left: 3px solid var(--accent3);
+    padding: 0.8rem 1rem;
+    font-size: 0.7rem;
+    color: #a0c8a0;
+    line-height: 1.8;
+    margin-top: 1rem;
+  }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>信用創造ダイナミクス v2 — フロー中心モデル</h1>
+<p class="subtitle">Y = C_flow − ΔK − LOSS(C,K) | CREDIT AS PRIMARY INCOME DRIVER</p>
+<p class="subtitle">解説(?)は、《<a href="http://jrf.cocolog-nifty.com/statuses/2026/02/post-a648df.html">信用創造の限界は法定準備率か金利か -- 分配集中度Φと在庫維持能力から見る金融崩壊の二段階構造と中央銀行の本質的ジレンマ。「信用創造を律するのは法定準備率だけではないか」という素朴な問いへのAIさん達の回答。(Claude さんによるシミュレーション付き。) - JRF のひとこと</a>》にて。</p>
+
+<div class="layout">
+  <!-- Parameters -->
+  <div>
+    <div class="panel">
+      <h2>パラメータ設定</h2>
+
+      <div class="param-group">
+        <div class="param-label">
+          <span class="param-name">金利水準 r</span>
+          <span class="param-value" id="v_r">0.05</span>
+        </div>
+        <div class="param-desc">金利取得者への分配集中度を決める。高いと統治問題と需要抑制の両経路が効く。</div>
+        <input type="range" id="r" min="0.01" max="0.25" step="0.005" value="0.05">
+      </div>
+
+      <div class="param-group">
+        <div class="param-label">
+          <span class="param-name">法定準備率 ρ</span>
+          <span class="param-value" id="v_rho">0.10</span>
+        </div>
+        <div class="param-desc">信用創造の直接的な上限制約。</div>
+        <input type="range" id="rho" min="0.01" max="0.50" step="0.01" value="0.10">
+      </div>
+
+      <div class="param-group">
+        <div class="param-label">
+          <span class="param-name">貯蓄性向 s</span>
+          <span class="param-value" id="v_s">0.20</span>
+        </div>
+        <div class="param-desc">所得のうち在庫（預金→投資）に回る割合。残りは消費として循環。</div>
+        <input type="range" id="s" min="0.05" max="0.60" step="0.01" value="0.20">
+      </div>
+
+      <div class="param-group">
+        <div class="param-label">
+          <span class="param-name">基礎損耗率 δ₀</span>
+          <span class="param-value" id="v_delta">0.04</span>
+        </div>
+        <div class="param-desc">平常時の在庫の物理的劣化・陳腐化率。</div>
+        <input type="range" id="delta" min="0.01" max="0.15" step="0.005" value="0.04">
+      </div>
+
+      <div class="param-group">
+        <div class="param-label">
+          <span class="param-name">崩壊時損耗増幅 κ</span>
+          <span class="param-value" id="v_kappa">2.0</span>
+        </div>
+        <div class="param-desc">信用収縮時に物理的損耗が増大する倍率。在庫が維持できなくなる効果。</div>
+        <input type="range" id="kappa" min="1.0" max="5.0" step="0.5" value="2.0">
+      </div>
+
+      <div class="param-group">
+        <div class="param-label">
+          <span class="param-name">分配集中閾値 θ</span>
+          <span class="param-value" id="v_theta">0.25</span>
+        </div>
+        <div class="param-desc">金利取得者の取り分がこれを超えると統治問題が発生。</div>
+        <input type="range" id="theta" min="0.10" max="0.50" step="0.05" value="0.25">
+      </div>
+
+      <div class="param-group">
+        <div class="param-label">
+          <span class="param-name">タンス預金化感応度 μ</span>
+          <span class="param-value" id="v_mu">0.60</span>
+        </div>
+        <div class="param-desc">分配集中超過に対して実効準備率が上昇する速さ。</div>
+        <input type="range" id="mu" min="0.10" max="3.0" step="0.10" value="0.60">
+      </div>
+
+      <div class="param-group">
+        <div class="param-label">
+          <span class="param-name">期待感応度 λ</span>
+          <span class="param-value" id="v_lambda">0.25</span>
+        </div>
+        <div class="param-desc">株式的富（在庫/金利）が借入需要に与える影響度。</div>
+        <input type="range" id="lambda" min="0.05" max="0.80" step="0.05" value="0.25">
+      </div>
+
+      <hr class="divider">
+
+      <div class="param-group">
+        <div class="param-label">
+          <span class="param-name">シミュレーション期間 T</span>
+          <span class="param-value" id="v_T">120</span>
+        </div>
+        <input type="range" id="T" min="30" max="300" step="10" value="120">
+      </div>
+
+      <button class="run-btn" onclick="runSim()">▶ シミュレーション実行</button>
+    </div>
+
+    <div class="panel" style="margin-top:1.2rem;">
+      <h2>モデル方程式</h2>
+      <div class="equation-box">
+        <span class="eq-highlight">// 【核心】所得はCフローから派生</span><br>
+        Y = C_flow − ΔK − LOSS<br><br>
+
+        <span class="eq-highlight">// 損耗（崩壊時に増大）</span><br>
+        stress = max(0, −ΔC/C)  <span class="eq-note">// 信用収縮度</span><br>
+        δ_eff = δ₀ · (1 + κ · stress)<br>
+        LOSS = δ_eff · K<br><br>
+
+        <span class="eq-highlight">// 在庫の変化（所得からの漏れ）</span><br>
+        ΔK = s · Y − LOSS<br><br>
+
+        <span class="eq-highlight">// 分配集中・実効準備率</span><br>
+        Φ = r · C / max(Y, ε)<br>
+        ρ_eff = ρ + μ · max(0, Φ−θ)<br><br>
+
+        <span class="eq-highlight">// 株式的富（期待）</span><br>
+        E = K / (r + δ_eff)<br><br>
+
+        <span class="eq-highlight">// 借入需要 → 信用フロー</span><br>
+        C_flow = λ · E · (1 − ρ_eff)<br>
+        ΔC = C_flow − r · C
+      </div>
+
+      <div class="concept-note">
+        ▎K は所得の源泉ではなく「循環からの漏れ」<br>
+        ▎崩壊時：ΔK&lt;0 → 在庫取崩しが所得に戻るが<br>
+        ▎　　　　δ_eff↑ → 物理的ロスが拡大し相殺以上<br>
+        ▎金利は二経路で信用を律する（分配集中・期待収縮）
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-area">
+    <div class="chart-panel">
+      <h2>システム状態</h2>
+      <div class="status-bar">
+        <div class="status-item"><span class="status-key">信用量 C</span><span class="status-val" id="s_C">—</span></div>
+        <div class="status-item"><span class="status-key">在庫 K</span><span class="status-val" id="s_K">—</span></div>
+        <div class="status-item"><span class="status-key">所得 Y</span><span class="status-val" id="s_Y">—</span></div>
+        <div class="status-item"><span class="status-key">分配集中 Φ</span><span class="status-val" id="s_phi">—</span></div>
+        <div class="status-item"><span class="status-key">実効損耗率</span><span class="status-val" id="s_delta">—</span></div>
+        <div class="status-item"><span class="status-key">実効準備率</span><span class="status-val" id="s_rho">—</span></div>
+        <div class="status-item"><span class="status-key">判定</span><span class="status-val" id="s_status">—</span></div>
+      </div>
+    </div>
+
+    <div class="chart-panel">
+      <h2>時系列ダイナミクス</h2>
+      <div class="charts-grid">
+        <div><canvas id="chart_CY"></canvas></div>
+        <div><canvas id="chart_K"></canvas></div>
+        <div><canvas id="chart_loss"></canvas></div>
+        <div><canvas id="chart_dist"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+['r','rho','s','delta','kappa','theta','mu','lambda','T'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => {
+    document.getElementById('v_'+id).textContent = parseFloat(el.value).toFixed(2);
+  });
+});
+
+let charts = {};
+
+function getParams() {
+  return {
+    r:      parseFloat(document.getElementById('r').value),
+    rho:    parseFloat(document.getElementById('rho').value),
+    s:      parseFloat(document.getElementById('s').value),
+    delta0: parseFloat(document.getElementById('delta').value),
+    kappa:  parseFloat(document.getElementById('kappa').value),
+    theta:  parseFloat(document.getElementById('theta').value),
+    mu:     parseFloat(document.getElementById('mu').value),
+    lambda: parseFloat(document.getElementById('lambda').value),
+    T:      parseInt(document.getElementById('T').value),
+  };
+}
+
+function runSim() {
+  const p = getParams();
+  const dt = 0.1;
+  const eps = 0.01;
+
+  // 初期値
+  let C = 10, K = 15;
+  let prevC = C;
+
+  const hist = { C:[], K:[], Y:[], E:[], phi:[], rho_eff:[], delta_eff:[], loss:[], dK:[] };
+
+  for (let t = 0; t < p.T; t++) {
+    // 信用収縮度（ストレス）
+    const stress = Math.max(0, -(C - prevC) / Math.max(C, eps));
+
+    // 実効損耗率：崩壊時に増大
+    const delta_eff = p.delta0 * (1 + p.kappa * stress);
+
+    // 損耗
+    const LOSS = delta_eff * K;
+
+    // 分配集中・実効準備率
+    // Yは前期値から暫定計算（循環を解くため）
+    const Y_prev = hist.Y.length > 0 ? hist.Y[hist.Y.length-1] : 5;
+    const phi = (p.r * C) / Math.max(Y_prev, eps);
+    const rho_eff = Math.min(p.rho + p.mu * Math.max(0, phi - p.theta), 0.98);
+
+    // 株式的富（期待）= 在庫の現在価値
+    const E = K / (p.r + delta_eff + eps);
+
+    // 借入需要 → 信用フロー
+    const C_flow = p.lambda * E * Math.max(0, 1 - rho_eff);
+
+    // 信用変化
+    const dC = C_flow - p.r * C;
+
+    // 【核心】所得 = 信用フロー − 在庫増加 − 損耗
+    // まず仮のΔKを求める
+    // ΔK = s·Y − LOSS, Y = C_flow − ΔK − LOSS
+    // 連立を解く: Y = C_flow − (s·Y − LOSS) − LOSS = C_flow − s·Y
+    // Y(1+s) = C_flow → Y = C_flow / (1+s)
+    const Y = Math.max(C_flow / (1 + p.s), 0);
+    const dK = p.s * Y - LOSS;
+
+    // 状態更新
+    prevC = C;
+    C = Math.max(C + dC * dt, 0.1);
+    K = Math.max(K + dK * dt, 0);
+
+    hist.C.push(C);
+    hist.K.push(K);
+    hist.Y.push(Y);
+    hist.E.push(Math.min(E, 500));
+    hist.phi.push(phi);
+    hist.rho_eff.push(rho_eff);
+    hist.delta_eff.push(delta_eff);
+    hist.loss.push(LOSS);
+    hist.dK.push(dK);
+  }
+
+  const last = p.T - 1;
+  document.getElementById('s_C').textContent = hist.C[last].toFixed(2);
+  document.getElementById('s_K').textContent = hist.K[last].toFixed(2);
+  document.getElementById('s_Y').textContent = hist.Y[last].toFixed(2);
+  document.getElementById('s_phi').textContent = (hist.phi[last]*100).toFixed(1)+'%';
+  document.getElementById('s_delta').textContent = (hist.delta_eff[last]*100).toFixed(1)+'%';
+  document.getElementById('s_rho').textContent = (hist.rho_eff[last]*100).toFixed(1)+'%';
+
+  const trend = hist.Y[last] - hist.Y[Math.max(0, last-15)];
+  const statusEl = document.getElementById('s_status');
+  if (hist.K[last] < 2 || hist.phi[last] > p.theta * 2) {
+    statusEl.textContent = '崩壊'; statusEl.className = 'status-val collapse';
+  } else if (Math.abs(trend) < 0.3) {
+    statusEl.textContent = '安定均衡'; statusEl.className = 'status-val stable';
+  } else if (trend > 0) {
+    statusEl.textContent = '膨張中'; statusEl.className = 'status-val expand';
+  } else {
+    statusEl.textContent = '収縮中'; statusEl.className = 'status-val collapse';
+  }
+
+  const labels = Array.from({length: p.T}, (_,i) => i);
+
+  const cs = (color) => ({
+    borderColor: color,
+    backgroundColor: color+'22',
+    borderWidth: 1.5, pointRadius: 0, fill: true, tension: 0.3
+  });
+
+  const baseOpts = {
+    animation: false,
+    plugins: { legend: { labels: { color: '#4a5568', font: { size: 10, family: 'Share Tech Mono' } } } },
+    scales: {
+      x: { ticks: { color: '#2d3748', maxTicksLimit: 5 }, grid: { color: '#1e2530' } },
+      y: { ticks: { color: '#4a5568', font: { size: 9 }, maxTicksLimit: 4 }, grid: { color: '#1e2530' } }
+    }
+  };
+
+  function mk(id, datasets, title) {
+    if (charts[id]) charts[id].destroy();
+    charts[id] = new Chart(document.getElementById(id), {
+      type: 'line',
+      data: { labels, datasets },
+      options: { ...baseOpts, plugins: { ...baseOpts.plugins,
+        title: { display: true, text: title, color: '#4a5568', font: { size: 9, family: 'Share Tech Mono' } } } }
+    });
+  }
+
+  mk('chart_CY', [
+    { label: '信用量 C', data: hist.C, ...cs('#00e5ff') },
+    { label: '所得 Y',   data: hist.Y, ...cs('#ffcc00') },
+  ], 'CREDIT C & INCOME Y');
+
+  mk('chart_K', [
+    { label: '在庫 K（循環からの漏れ）', data: hist.K, ...cs('#7fff6b') },
+    { label: 'ΔK（在庫変化）', data: hist.dK, borderColor:'#7fff6b88', backgroundColor:'transparent', borderWidth:1, borderDash:[3,3], pointRadius:0, fill:false },
+  ], 'INVENTORY K (LEAKAGE FROM FLOW)');
+
+  mk('chart_loss', [
+    { label: '物理的損耗 LOSS', data: hist.loss, ...cs('#ff6b35') },
+    { label: '実効損耗率 δ_eff', data: hist.delta_eff, borderColor:'#ff6b3588', backgroundColor:'transparent', borderWidth:1, borderDash:[3,3], pointRadius:0, fill:false },
+  ], 'PHYSICAL LOSS (AMPLIFIED IN COLLAPSE)');
+
+  mk('chart_dist', [
+    { label: '分配集中度 Φ', data: hist.phi, ...cs('#ff6b35') },
+    { label: '閾値 θ', data: Array(p.T).fill(p.theta), borderColor:'#ff000055', borderDash:[4,4], borderWidth:1, pointRadius:0, fill:false },
+    { label: '実効準備率', data: hist.rho_eff, ...cs('#a855f7') },
+  ], 'DISTRIBUTION & EFFECTIVE RESERVE');
+}
+
+runSim();
+</script>
+</body>
+</html>

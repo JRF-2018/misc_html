@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>信用創造ダイナミクス・シミュレーション</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;700&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --bg: #0a0c0f;
+    --panel: #10141a;
+    --border: #1e2530;
+    --accent1: #00e5ff;
+    --accent2: #ff6b35;
+    --accent3: #7fff6b;
+    --accent4: #ffcc00;
+    --text: #c8d4e0;
+    --muted: #4a5568;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif JP', serif;
+    min-height: 100vh;
+    padding: 2rem;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    color: var(--accent1);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 2rem;
+    letter-spacing: 0.1em;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 1.5rem;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 1.2rem;
+    border-radius: 2px;
+  }
+
+  .panel h2 {
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .param-group {
+    margin-bottom: 1.4rem;
+  }
+
+  .param-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.4rem;
+  }
+
+  .param-name {
+    font-size: 0.8rem;
+    color: var(--text);
+  }
+
+  .param-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--accent1);
+  }
+
+  .param-desc {
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+  }
+
+  input[type=range] {
+    width: 100%;
+    height: 3px;
+    -webkit-appearance: none;
+    background: var(--border);
+    outline: none;
+    border-radius: 2px;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent1);
+    cursor: pointer;
+  }
+
+  .run-btn {
+    width: 100%;
+    padding: 0.8rem;
+    background: transparent;
+    border: 1px solid var(--accent1);
+    color: var(--accent1);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 0.5rem;
+    text-transform: uppercase;
+  }
+
+  .run-btn:hover {
+    background: var(--accent1);
+    color: var(--bg);
+  }
+
+  .charts-area {
+    display: grid;
+    grid-template-rows: auto auto;
+    gap: 1.5rem;
+  }
+
+  .chart-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 1.2rem;
+    border-radius: 2px;
+  }
+
+  .chart-panel h2 {
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  canvas { max-height: 200px; }
+
+  .equation-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 1rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    line-height: 2;
+    margin-top: 1rem;
+  }
+
+  .eq-highlight { color: var(--accent3); }
+
+  .status-bar {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .status-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .status-key {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .status-val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+  }
+
+  .collapse { color: var(--accent2); }
+  .stable  { color: var(--accent3); }
+  .expand  { color: var(--accent1); }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1rem 0;
+  }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>信用創造ダイナミクス・シミュレーション</h1>
+<p class="subtitle">CREDIT CREATION MODEL — DISTRIBUTION, INVENTORY, EXPECTATION DYNAMICS</p>
+<p class="subtitle">解説(?)は、《<a href="http://jrf.cocolog-nifty.com/statuses/2026/02/post-a648df.html">信用創造の限界は法定準備率か金利か -- 分配集中度Φと在庫維持能力から見る金融崩壊の二段階構造と中央銀行の本質的ジレンマ。「信用創造を律するのは法定準備率だけではないか」という素朴な問いへのAIさん達の回答。(Claude さんによるシミュレーション付き。) - JRF のひとこと</a>》にて。</p>
+
+<div class="layout">
+  <!-- Parameters -->
+  <div>
+    <div class="panel">
+      <h2>パラメータ設定</h2>
+
+      <div class="param-group">
+        <div class="param-label">
+          <span class="param-name">金利水準 r</span>
+          <span class="param-value" id="v_r">0.05</span>
+        </div>
+        <div class="param-desc">金利取得者への分配集中度。高いと統治問題と需要抑制の両方が働く。</div>
+        <input type="range" id="r" min="0.01" max="0.20" step="0.005" value="0.05">
+      </div>
+
+      <div class="param-group">
+        <div class="param-label">
+          <span class="param-name">法定準備率 ρ</span>
+          <span class="param-value" id="v_rho">0.10</span>
+        </div>
+        <div class="param-desc">直接的な信用創造の上限制約。</div>
+        <input type="range" id="rho" min="0.01" max="0.50" step="0.01" value="0.10">
+      </div>
+
+      <div class="param-group">
+        <div class="param-label">
+          <span class="param-name">貯蓄性向 s</span>
+          <span class="param-value" id="v_s">0.20</span>
+        </div>
+        <div class="param-desc">所得のうち預金に回る割合。1-s が消費へ。</div>
+        <input type="range" id="s" min="0.05" max="0.60" step="0.01" value="0.20">
+      </div>
+
+      <div class="param-group">
+        <div class="param-label">
+          <span class="param-name">期待感応度 λ</span>
+          <span class="param-value" id="v_lambda">0.30</span>
+        </div>
+        <div class="param-desc">株式的富（期待）が借入需要に与える感応度。</div>
+        <input type="range" id="lambda" min="0.05" max="0.80" step="0.05" value="0.30">
+      </div>
+
+      <div class="param-group">
+        <div class="param-label">
+          <span class="param-name">在庫ロス率 δ</span>
+          <span class="param-value" id="v_delta">0.05</span>
+        </div>
+        <div class="param-desc">物理的劣化・陳腐化による在庫の自然減。</div>
+        <input type="range" id="delta" min="0.01" max="0.20" step="0.01" value="0.05">
+      </div>
+
+      <div class="param-group">
+        <div class="param-label">
+          <span class="param-name">分配集中閾値 θ</span>
+          <span class="param-value" id="v_theta">0.25</span>
+        </div>
+        <div class="param-desc">金利取得者の取り分がこれを超えると統治問題が発生し始める。</div>
+        <input type="range" id="theta" min="0.10" max="0.50" step="0.05" value="0.25">
+      </div>
+
+      <div class="param-group">
+        <div class="param-label">
+          <span class="param-name">タンス預金化感応度 μ</span>
+          <span class="param-value" id="v_mu">0.50</span>
+        </div>
+        <div class="param-desc">分配集中超過に対して実効準備率が上昇する速さ。</div>
+        <input type="range" id="mu" min="0.10" max="2.0" step="0.10" value="0.50">
+      </div>
+
+      <hr class="divider">
+
+      <div class="param-group">
+        <div class="param-label">
+          <span class="param-name">シミュレーション期間 T</span>
+          <span class="param-value" id="v_T">100</span>
+        </div>
+        <input type="range" id="T" min="30" max="300" step="10" value="100">
+      </div>
+
+      <button class="run-btn" onclick="runSim()">▶ シミュレーション実行</button>
+    </div>
+
+    <div class="panel" style="margin-top:1.2rem;">
+      <h2>モデル方程式</h2>
+      <div class="equation-box">
+        <span class="eq-highlight">// 有効準備率（タンス預金化込み）</span><br>
+        ρ_eff = ρ + μ·max(0, Φ−θ)<br>
+        Φ = r·C / Y  // 分配集中度<br><br>
+        <span class="eq-highlight">// 株式的富（期待）</span><br>
+        E = K / (r + δ)  // 在庫の現在価値<br><br>
+        <span class="eq-highlight">// 借入需要</span><br>
+        D = λ·E·(1−ρ_eff)<br><br>
+        <span class="eq-highlight">// 信用量の変化</span><br>
+        ΔC = D − r·C  // 需要 − 元利返済<br><br>
+        <span class="eq-highlight">// 在庫の変化</span><br>
+        ΔK = s·Y − δ·K + ΔC<br><br>
+        <span class="eq-highlight">// 産出（所得）</span><br>
+        Y = K^α  // α=0.7
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-area">
+    <div class="chart-panel">
+      <h2>システム状態</h2>
+      <div class="status-bar" id="status-bar">
+        <div class="status-item"><span class="status-key">最終信用量 C</span><span class="status-val" id="s_C">—</span></div>
+        <div class="status-item"><span class="status-key">最終在庫 K</span><span class="status-val" id="s_K">—</span></div>
+        <div class="status-item"><span class="status-key">最終産出 Y</span><span class="status-val" id="s_Y">—</span></div>
+        <div class="status-item"><span class="status-key">分配集中度 Φ</span><span class="status-val" id="s_phi">—</span></div>
+        <div class="status-item"><span class="status-key">実効準備率</span><span class="status-val" id="s_rho_eff">—</span></div>
+        <div class="status-item"><span class="status-key">崩壊判定</span><span class="status-val" id="s_status">—</span></div>
+      </div>
+    </div>
+
+    <div class="chart-panel">
+      <h2>時系列ダイナミクス</h2>
+      <div class="charts-grid">
+        <div><canvas id="chart_CK"></canvas></div>
+        <div><canvas id="chart_YE"></canvas></div>
+        <div><canvas id="chart_dist"></canvas></div>
+        <div><canvas id="chart_rho"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Sync sliders
+['r','rho','s','lambda','delta','theta','mu','T'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => {
+    document.getElementById('v_'+id).textContent = parseFloat(el.value).toFixed(2);
+  });
+});
+
+let charts = {};
+
+function getParams() {
+  return {
+    r:      parseFloat(document.getElementById('r').value),
+    rho:    parseFloat(document.getElementById('rho').value),
+    s:      parseFloat(document.getElementById('s').value),
+    lambda: parseFloat(document.getElementById('lambda').value),
+    delta:  parseFloat(document.getElementById('delta').value),
+    theta:  parseFloat(document.getElementById('theta').value),
+    mu:     parseFloat(document.getElementById('mu').value),
+    T:      parseInt(document.getElementById('T').value),
+  };
+}
+
+function runSim() {
+  const p = getParams();
+  const alpha = 0.7;
+
+  // Initial conditions
+  let C = 10, K = 20;
+  const history = { C:[], K:[], Y:[], E:[], phi:[], rho_eff:[], D:[], dK:[] };
+
+  for (let t = 0; t < p.T; t++) {
+    const Y = Math.pow(Math.max(K, 0.1), alpha);
+    const phi = (p.r * C) / Math.max(Y, 0.01);
+    const rho_eff = p.rho + p.mu * Math.max(0, phi - p.theta);
+    const E = K / (p.r + p.delta);
+    const D = p.lambda * E * Math.max(0, 1 - rho_eff);
+    const dC = D - p.r * C;
+    const dK = p.s * Y - p.delta * K + Math.max(0, dC);
+
+    C = Math.max(0, C + dC * 0.1);
+    K = Math.max(0, K + dK * 0.1);
+
+    history.C.push(C);
+    history.K.push(K);
+    history.Y.push(Y);
+    history.E.push(E);
+    history.phi.push(phi);
+    history.rho_eff.push(Math.min(rho_eff, 1));
+    history.D.push(D);
+    history.dK.push(dK);
+  }
+
+  const labels = Array.from({length: p.T}, (_,i) => i);
+  const last = p.T - 1;
+  const finalC = history.C[last];
+  const finalK = history.K[last];
+  const finalY = history.Y[last];
+  const finalPhi = history.phi[last];
+  const finalRho = history.rho_eff[last];
+
+  // Status
+  document.getElementById('s_C').textContent = finalC.toFixed(2);
+  document.getElementById('s_K').textContent = finalK.toFixed(2);
+  document.getElementById('s_Y').textContent = finalY.toFixed(2);
+  document.getElementById('s_phi').textContent = (finalPhi*100).toFixed(1)+'%';
+  document.getElementById('s_rho_eff').textContent = (finalRho*100).toFixed(1)+'%';
+
+  const trend = history.Y[last] - history.Y[Math.max(0,last-10)];
+  const statusEl = document.getElementById('s_status');
+  if (finalPhi > p.theta * 1.5 || finalK < 5) {
+    statusEl.textContent = '崩壊傾向'; statusEl.className = 'status-val collapse';
+  } else if (Math.abs(trend) < 0.5) {
+    statusEl.textContent = '安定均衡'; statusEl.className = 'status-val stable';
+  } else {
+    statusEl.textContent = '膨張中'; statusEl.className = 'status-val expand';
+  }
+
+  // Charts
+  const chartStyle = (color) => ({
+    borderColor: color, backgroundColor: color+'22',
+    borderWidth: 1.5, pointRadius: 0, fill: true, tension: 0.3
+  });
+
+  const defaults = {
+    animation: false,
+    plugins: { legend: { labels: { color: '#4a5568', font: { size: 10, family: 'Share Tech Mono' } } } },
+    scales: {
+      x: { ticks: { color: '#2d3748', maxTicksLimit: 5 }, grid: { color: '#1e2530' } },
+      y: { ticks: { color: '#4a5568', font: { size: 9 }, maxTicksLimit: 4 }, grid: { color: '#1e2530' } }
+    }
+  };
+
+  function makeOrUpdate(id, datasets, title) {
+    if (charts[id]) charts[id].destroy();
+    charts[id] = new Chart(document.getElementById(id), {
+      type: 'line',
+      data: { labels, datasets },
+      options: { ...defaults, plugins: { ...defaults.plugins, title: { display: true, text: title, color: '#4a5568', font: { size: 9, family: 'Share Tech Mono' } } } }
+    });
+  }
+
+  makeOrUpdate('chart_CK', [
+    { label: '信用量 C', data: history.C, ...chartStyle('#00e5ff') },
+    { label: '在庫 K',   data: history.K, ...chartStyle('#7fff6b') },
+  ], 'CREDIT & INVENTORY');
+
+  makeOrUpdate('chart_YE', [
+    { label: '産出 Y',     data: history.Y, ...chartStyle('#ffcc00') },
+    { label: '株式的富 E', data: history.E.map(e=>Math.min(e,200)), ...chartStyle('#ff6b35') },
+  ], 'OUTPUT & EQUITY');
+
+  makeOrUpdate('chart_dist', [
+    { label: '分配集中度 Φ', data: history.phi, ...chartStyle('#ff6b35') },
+    { label: '閾値 θ', data: Array(p.T).fill(p.theta), borderColor: '#ff000066', borderDash: [4,4], borderWidth: 1, pointRadius: 0, fill: false },
+  ], 'DISTRIBUTION CONCENTRATION');
+
+  makeOrUpdate('chart_rho', [
+    { label: '実効準備率', data: history.rho_eff, ...chartStyle('#a855f7') },
+    { label: '法定準備率 ρ', data: Array(p.T).fill(p.rho), borderColor: '#ffffff33', borderDash: [4,4], borderWidth: 1, pointRadius: 0, fill: false },
+  ], 'EFFECTIVE RESERVE RATIO');
+}
+
+// Run on load
+runSim();
+</script>
+</body>
+</html>

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>信用創造ダイナミクス v5</title>
+<style>
+  :root {
+    --bg:#0f1117;--bg2:#181c27;--border:#2a3050;--accent:#4a9eff;--accent2:#f0a500;
+    --accent3:#e05555;--accent4:#50c878;--new:#a78bfa;
+    --text:#cdd5f0;--text2:#8890b0;--text3:#5a6080;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;font-size:13px;line-height:1.6;padding:20px;}
+  h1{font-size:18px;color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:6px;}
+  .sub{color:var(--text2);font-size:11px;margin-bottom:4px;}
+  .vnote{color:var(--new);font-size:11px;margin-bottom:16px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  @media(max-width:700px){.grid{grid-template-columns:1fr;}}
+  .panel{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:14px;}
+  .panel h2{font-size:12px;color:var(--accent2);margin-bottom:12px;letter-spacing:.1em;text-transform:uppercase;}
+  .pr{display:flex;align-items:center;margin-bottom:10px;gap:8px;}
+  .pr label{flex:1;color:var(--text2);font-size:11px;}
+  .pr label .nw{color:var(--new);}
+  .pr input[type=range]{width:110px;accent-color:var(--accent);}
+  .pr .val{width:46px;text-align:right;color:var(--accent);font-size:12px;}
+  .pd{color:var(--text3);font-size:10px;margin-top:-6px;margin-bottom:8px;padding-left:4px;}
+  .pd.nw{color:#7c6fcd;}
+  .btn{background:var(--accent);color:#000;border:none;padding:8px 24px;font-family:'Courier New',monospace;font-size:13px;font-weight:bold;cursor:pointer;border-radius:2px;display:block;margin:0 auto 16px;letter-spacing:.1em;}
+  .btn:hover{background:#6ab4ff;}
+  .sg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}
+  @media(max-width:700px){.sg{grid-template-columns:repeat(2,1fr);}}
+  .sb{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:10px 12px;text-align:center;}
+  .sb .lbl{color:var(--text3);font-size:10px;}
+  .sb .val{color:var(--accent);font-size:15px;font-weight:bold;}
+  .sb .val.warn{color:var(--accent3);}
+  .sb .val.ok{color:var(--accent4);}
+  .sb .val.nw{color:var(--new);}
+  .verdict{text-align:center;font-size:13px;font-weight:bold;padding:8px;border-radius:3px;margin-bottom:16px;}
+  .stable{background:#1a3a1a;color:var(--accent4);border:1px solid var(--accent4);}
+  .vwarn{background:#3a2a1a;color:var(--accent2);border:1px solid var(--accent2);}
+  .crisis{background:#3a1a1a;color:var(--accent3);border:1px solid var(--accent3);}
+  canvas{width:100%;display:block;background:var(--bg2);border:1px solid var(--border);border-radius:4px;margin-bottom:10px;}
+  .leg{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;font-size:10px;}
+  .ld{display:flex;align-items:center;gap:4px;}
+  .dot{width:18px;height:3px;border-radius:1px;display:inline-block;}
+  .ep{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:14px;margin-bottom:16px;}
+  .ep h2{font-size:12px;color:var(--accent2);margin-bottom:10px;letter-spacing:.1em;text-transform:uppercase;}
+  .eq{color:var(--text2);font-size:11px;line-height:2;}
+  .eq .nw{color:var(--new);}
+  .eq .cm{color:var(--text3);}
+  .ann{color:var(--text3);font-size:10px;margin-top:8px;line-height:1.8;}
+  .ann .nw{color:var(--new);}
+  hr{border:none;border-top:1px solid var(--border);margin:12px 0;}
+  .tr{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+  .tr label{color:var(--text2);font-size:11px;}
+  .tr input[type=range]{width:120px;accent-color:var(--accent);}
+  .tr .val{color:var(--accent);font-size:12px;}
+</style>
+</head>
+<body>
+
+<h1>信用創造ダイナミクス v5</h1>
+<div class="sub">E = K^α / (r + δK + ε) | DIMINISHING RETURNS TO CAPITAL + DEMAND SUPPRESSION</div>
+<div class="vnote">v3からの変更：★ s_eff = s + γ·max(0, Φ−θ) を導入。分配集中度Φが閾値θを超えると貯蓄性向が内生的に上昇し、需要が抑制される。</div>
+<div class="vnote">v4からの変更：★ E = K^α（α&lt;1）を導入。資本の限界収益逓減によりE&lt;Cが保証され、高貯蓄時の発散を解消。s_eff内生化（γ）はv4から継続。</div>
+
+<p class="vnote">解説(?)は、《<a href="http://jrf.cocolog-nifty.com/statuses/2026/02/post-a648df.html">信用創造の限界は法定準備率か金利か -- 分配集中度Φと在庫維持能力から見る金融崩壊の二段階構造と中央銀行の本質的ジレンマ。「信用創造を律するのは法定準備率だけではないか」という素朴な問いへのAIさん達の回答。(Claude さんによるシミュレーション付き。) - JRF のひとこと</a>》(2026年2月)および《<a href="http://jrf.cocolog-nifty.com/statuses/2026/04/post-84784d.html">資本主義の成立(労働力の空売り)と魔術(有閑階級と労働者階級の「失業」の意味の意図的な混同)について考えた。 - JRF のひとこと</a>》(2026年4月)にて。</p>
+
+<div class="grid">
+  <div class="panel">
+    <h2>基本パラメータ</h2>
+    <div class="pr"><label>金利水準 r</label><input type="range" id="r" min="0.01" max="0.20" step="0.01" value="0.05"><span class="val" id="r_v">0.05</span></div>
+    <div class="pd">金利取得者への分配集中度。高いとΦが上昇しやすい。</div>
+    <div class="pr"><label>法定準備率 ρ</label><input type="range" id="rho" min="0.01" max="0.50" step="0.01" value="0.10"><span class="val" id="rho_v">0.10</span></div>
+    <div class="pd">信用創造の直接的な上限制約。</div>
+    <div class="pr"><label>貯蓄性向 s</label><input type="range" id="s" min="0.05" max="0.70" step="0.01" value="0.20"><span class="val" id="s_v">0.20</span></div>
+    <div class="pd">基礎貯蓄性向。v5ではsを高くしても発散しない。</div>
+    <div class="pr"><label>基礎損耗率 δ₀</label><input type="range" id="delta0" min="0.01" max="0.15" step="0.005" value="0.04"><span class="val" id="delta0_v">0.040</span></div>
+    <div class="pd">平常時の在庫の物理的劣化・陳腐化率。</div>
+    <div class="pr"><label>在庫損耗増幅 κ</label><input type="range" id="kappa" min="0.5" max="8.0" step="0.5" value="3.0"><span class="val" id="kappa_v">3.0</span></div>
+    <div class="pd">株式的富E収縮時に在庫損耗δKが増大する倍率。</div>
+    <div class="pr"><label>消費側損耗率 δ_C</label><input type="range" id="deltaC" min="0.00" max="0.20" step="0.01" value="0.05"><span class="val" id="deltaC_v">0.05</span></div>
+    <div class="pd">消費フローに比例する損耗。BP介入時は低く設定。</div>
+  </div>
+
+  <div class="panel">
+    <h2>分配・信用・資本パラメータ</h2>
+    <div class="pr"><label>分配集中閾値 θ</label><input type="range" id="theta" min="0.05" max="0.60" step="0.01" value="0.25"><span class="val" id="theta_v">0.25</span></div>
+    <div class="pd">Φがこれを超えるとタンス預金化・需要抑制が起動。</div>
+    <div class="pr"><label>タンス預金化感応度 μ</label><input type="range" id="mu" min="0.10" max="2.00" step="0.05" value="0.60"><span class="val" id="mu_v">0.60</span></div>
+    <div class="pd">Φ超過に対してρ_effが上昇する速さ。</div>
+    <div class="pr"><label>期待感応度 λ</label><input type="range" id="lambda" min="0.05" max="0.80" step="0.05" value="0.25"><span class="val" id="lambda_v">0.25</span></div>
+    <div class="pd">株式的富Eが借入需要に与える感応度。</div>
+    <div class="pr"><label><span class="nw">★ 需要抑制感応度 γ</span></label><input type="range" id="gamma" min="0.00" max="2.00" step="0.05" value="0.40"><span class="val" id="gamma_v">0.40</span></div>
+    <div class="pd nw">★ v4継続。Φ超過でs_effが上昇し需要を内生的に抑制。γ=0でv3相当。</div>
+    <hr>
+    <div class="pr"><label><span class="nw">★ 資本弾力性 α</span></label><input type="range" id="alpha" min="0.30" max="1.00" step="0.05" value="0.70"><span class="val" id="alpha_v">0.70</span></div>
+    <div class="pd nw">★ v5新規。E=K^αの指数。α=1でv4相当（発散）。α&lt;1で限界収益逓減、E&lt;Cが保証される。</div>
+    <hr>
+    <div class="tr"><label>シミュレーション期間 T</label><input type="range" id="T" min="50" max="300" step="10" value="150"><span class="val" id="T_v">150</span></div>
+    <button class="btn" onclick="runSim()">▶ 実行</button>
+  </div>
+</div>
+
+<div class="sg">
+  <div class="sb"><div class="lbl">信用量 C</div><div class="val" id="st_C">—</div></div>
+  <div class="sb"><div class="lbl">在庫 K</div><div class="val" id="st_K">—</div></div>
+  <div class="sb"><div class="lbl">所得 Y</div><div class="val" id="st_Y">—</div></div>
+  <div class="sb"><div class="lbl">株式的富 E</div><div class="val" id="st_E">—</div></div>
+  <div class="sb"><div class="lbl">分配集中 Φ</div><div class="val" id="st_Phi">—</div></div>
+  <div class="sb"><div class="lbl">在庫損耗率 δK</div><div class="val" id="st_dK">—</div></div>
+  <div class="sb"><div class="lbl">消費フロー (1−s_eff)·Y</div><div class="val" id="st_cons">—</div></div>
+  <div class="sb"><div class="lbl" style="color:var(--new)">★ 実効貯蓄性向 s_eff</div><div class="val nw" id="st_seff">—</div></div>
+  <div class="sb"><div class="lbl" style="color:var(--new)">★ E &lt; C ?</div><div class="val" id="st_ec">—</div></div>
+  <div class="sb"><div class="lbl">需要抑制幅 Δs</div><div class="val" id="st_ds">—</div></div>
+  <div class="sb"><div class="lbl">在庫変化 ΔK</div><div class="val" id="st_dk2">—</div></div>
+  <div class="sb"><div class="lbl">消費損耗 LOSS_C</div><div class="val" id="st_lc">—</div></div>
+</div>
+
+<div class="verdict" id="verdict">—</div>
+
+<canvas id="chart1" style="height:220px;"></canvas>
+<div class="leg">
+  <div class="ld"><div class="dot" style="background:#4a9eff"></div>信用量 C</div>
+  <div class="ld"><div class="dot" style="background:#50c878"></div>在庫 K</div>
+  <div class="ld"><div class="dot" style="background:#f0a500"></div>所得 Y</div>
+  <div class="ld"><div class="dot" style="background:#e05555"></div>株式的富 E</div>
+  <div class="ld"><div class="dot" style="background:#4af0d0;opacity:0.7"></div>消費フロー (1−s_eff)·Y</div>
+</div>
+
+<canvas id="chart2" style="height:160px;"></canvas>
+<div class="leg">
+  <div class="ld"><div class="dot" style="background:#a78bfa"></div>★ s_eff（実効貯蓄性向）</div>
+  <div class="ld"><div class="dot" style="background:#f0a500"></div>分配集中 Φ</div>
+  <div class="ld"><div class="dot" style="background:#e05555"></div>在庫損耗率 δK</div>
+</div>
+
+<div class="ep">
+  <h2>モデル方程式 v5</h2>
+  <div class="eq">
+<span class="cm">// ★ v5新規：資本の限界収益逓減</span><br>
+<span class="nw">E = K^α / (r + δK + ε)　（0 &lt; α &lt; 1、デフォルト α=0.70）</span><br>
+<span class="nw">　→ α=1 で v4 相当（発散）。α&lt;1 で E&lt;C が自然に成立。</span><br>
+<br>
+<span class="cm">// stress = 株式的富の収縮度</span><br>
+stress_E = max(0, −ΔE/E_prev)<br>
+<br>
+<span class="cm">// 在庫側損耗（stress_Eで増幅）</span><br>
+δK = δ₀ · (1 + κ · stress_E)　　LOSS_K = δK · K<br>
+<br>
+<span class="cm">// 消費側損耗</span><br>
+LOSS_C = δ_C · (1−s_eff) · Y<br>
+<br>
+<span class="cm">// 分配集中・実効準備率</span><br>
+Φ = r·C / max(Y, ε)<br>
+ρ_eff = ρ + μ·max(0, Φ−θ)<br>
+<br>
+<span class="cm">// ★ v4継続：実効貯蓄性向（需要抑制経路）</span><br>
+<span class="nw">s_eff = s + γ·max(0, Φ−θ)</span><br>
+<br>
+<span class="cm">// 信用フロー・信用変化</span><br>
+C_flow = λ·E·(1−ρ_eff)　　ΔC = C_flow − r·C<br>
+<br>
+<span class="cm">// 所得・在庫変化（s_eff使用）</span><br>
+Y = C_flow / (1 + s_eff + δ_C·(1−s_eff))<br>
+ΔK = s_eff·Y − LOSS_K
+  </div>
+  <div class="ann">
+    ▎<span class="nw">★ α&lt;1：K増加→Eの増加が鈍化→C_flowの発散が抑制→E&lt;Cが自然に成立</span><br>
+    ▎<span class="nw">★ 高貯蓄（s大）でもKの成長が自己抑制され、Yは現実的な水準に収束</span><br>
+    ▎s_eff：Φ↑→s_eff↑→消費比率(1−s_eff)↓（需要抑制）かつY↓（所得抑制）<br>
+    ▎ρ_eff：Φ↑→ρ_eff↑→C_flow↓（信用収縮）<br>
+    ▎<span class="nw">★ γ=0、α=1のときv3と同一挙動</span>
+  </div>
+</div>
+
+<script>
+const IDS=['r','rho','s','delta0','kappa','deltaC','theta','mu','lambda','gamma','alpha','T'];
+IDS.forEach(id=>{
+  const el=document.getElementById(id);
+  const vEl=document.getElementById(id+'_v');
+  el.addEventListener('input',()=>{
+    const v=parseFloat(el.value);
+    vEl.textContent=id==='delta0'?v.toFixed(3):v.toFixed(2);
+  });
+});
+
+function getP(){
+  return {
+    r:+document.getElementById('r').value,
+    rho:+document.getElementById('rho').value,
+    s:+document.getElementById('s').value,
+    d0:+document.getElementById('delta0').value,
+    kappa:+document.getElementById('kappa').value,
+    dC:+document.getElementById('deltaC').value,
+    theta:+document.getElementById('theta').value,
+    mu:+document.getElementById('mu').value,
+    lam:+document.getElementById('lambda').value,
+    gam:+document.getElementById('gamma').value,
+    alpha:+document.getElementById('alpha').value,
+    T:+document.getElementById('T').value,
+  };
+}
+
+function simulate(p){
+  const eps=1e-8;
+  let C=10,K=10;
+  let E_prev=Math.pow(K,p.alpha)/(p.r+p.d0+eps);
+  const h={C:[],K:[],Y:[],E:[],Phi:[],dK:[],seff:[],cons:[],dk2:[]};
+  for(let t=0;t<p.T;t++){
+    const E_cur=Math.pow(K,p.alpha)/(p.r+p.d0+eps);
+    const stress=Math.max(0,-(E_cur-E_prev)/(Math.abs(E_prev)+eps));
+    const dK=p.d0*(1+p.kappa*stress);
+    const LOSS_K=dK*K;
+    const Y_prev=h.Y.length>0?h.Y[h.Y.length-1]:1;
+    const Phi=p.r*C/Math.max(Y_prev,eps);
+    const rho_eff=Math.min(p.rho+p.mu*Math.max(0,Phi-p.theta),0.99);
+    const s_eff=Math.min(p.s+p.gam*Math.max(0,Phi-p.theta),0.95);
+    const E=Math.pow(K,p.alpha)/(p.r+dK+eps);
+    const C_flow=p.lam*E*(1-rho_eff);
+    const dC2=C_flow-p.r*C;
+    const denom=1+s_eff+p.dC*(1-s_eff);
+    const Y=C_flow/Math.max(denom,eps);
+    const cons=(1-s_eff)*Y;
+    const deltaK=s_eff*Y-LOSS_K;
+    h.C.push(C);h.K.push(K);h.Y.push(Y);h.E.push(E);
+    h.Phi.push(Phi);h.dK.push(dK);h.seff.push(s_eff);
+    h.cons.push(cons);h.dk2.push(deltaK);
+    E_prev=E;
+    C=Math.max(C+dC2*0.1,0.01);
+    K=Math.max(K+deltaK*0.1,0.01);
+  }
+  return h;
+}
+
+function drawChart(id,datasets,T){
+  const canvas=document.getElementById(id);
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=canvas.offsetWidth*dpr;
+  canvas.height=canvas.offsetHeight*dpr;
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const W=canvas.offsetWidth,H=canvas.offsetHeight;
+  ctx.fillStyle='#181c27';ctx.fillRect(0,0,W,H);
+  const pad={l:44,r:10,t:10,b:28};
+  const pw=W-pad.l-pad.r,ph=H-pad.t-pad.b;
+  let maxV=0;
+  datasets.forEach(d=>d.data.forEach(v=>{if(isFinite(v)&&v>maxV)maxV=v;}));
+  if(maxV===0)maxV=1;
+  ctx.strokeStyle='#2a3050';ctx.lineWidth=0.5;
+  for(let i=0;i<=4;i++){const y=pad.t+ph*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+pw,y);ctx.stroke();}
+  datasets.forEach(d=>{
+    ctx.beginPath();ctx.strokeStyle=d.color;ctx.lineWidth=d.thin?1:1.5;
+    ctx.setLineDash(d.dash||[]);
+    d.data.forEach((v,t)=>{
+      const x=pad.l+pw*t/(d.data.length-1);
+      const y=pad.t+ph*(1-Math.min(Math.max(v,0),maxV*1.1)/(maxV*1.1));
+      t===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  ctx.fillStyle='#5a6080';ctx.font='9px Courier New';
+  ctx.textAlign='right';
+  for(let i=0;i<=4;i++){const v=maxV*(1-i/4);ctx.fillText(v.toFixed(1),pad.l-3,pad.t+ph*i/4+3);}
+  ctx.textAlign='center';
+  [0,Math.floor(T/4),Math.floor(T/2),Math.floor(3*T/4),T-1].forEach(t=>{
+    ctx.fillText(t,pad.l+pw*t/(T-1),H-pad.b+14);
+  });
+}
+
+function runSim(){
+  const p=getP();
+  const h=simulate(p);
+  const last=arr=>arr[arr.length-1];
+  const fmt=(v,d=3)=>isFinite(v)?v.toFixed(d):'—';
+  const Cf=last(h.C),Kf=last(h.K),Yf=last(h.Y),Ef=last(h.E);
+  const Phif=last(h.Phi),dKf=last(h.dK),sefff=last(h.seff);
+  const consf=last(h.cons),dk2f=last(h.dk2);
+  const ds=sefff-p.s;
+  const ec=Ef<Cf;
+
+  const sv=(id,v,cls='')=>{
+    const el=document.getElementById(id);
+    el.textContent=v;el.className='val'+(cls?' '+cls:'');
+  };
+  sv('st_C',fmt(Cf,2));
+  sv('st_K',fmt(Kf,2));
+  sv('st_Y',fmt(Yf,3));
+  sv('st_E',fmt(Ef,2));
+  sv('st_Phi',fmt(Phif,3),Phif>p.theta*1.5?'warn':Phif<p.theta?'ok':'');
+  sv('st_dK',fmt(dKf,4));
+  sv('st_cons',fmt(consf,3));
+  sv('st_seff',fmt(sefff,3),ds>0.05?'warn nw':'nw');
+  sv('st_ec',ec?'✓ ok':'✗ NG',ec?'ok':'warn');
+  sv('st_ds',fmt(ds,3),ds>0.1?'warn':'');
+  sv('st_dk2',fmt(dk2f,4),dk2f<0?'warn':dk2f>0?'ok':'');
+  sv('st_lc',fmt(p.dC*(1-sefff)*Yf,4));
+
+  const vEl=document.getElementById('verdict');
+  const Cp=h.C[Math.max(0,h.C.length-20)];
+  if(Cf<0.5||Kf<0.5){vEl.className='verdict crisis';vEl.textContent='❌ 崩壊：信用・在庫が消滅';}
+  else if(Cf<Cp*0.6){vEl.className='verdict crisis';vEl.textContent='⚠️ 深刻な収縮：崩壊リスク高';}
+  else if(ds>0.15&&Cf<Cp){vEl.className='verdict vwarn';vEl.textContent='⚠️ 需要抑制進行中：s_eff上昇で消費が慢性的に圧縮';}
+  else if(Phif>p.theta*1.3){vEl.className='verdict vwarn';vEl.textContent='⚠️ 分配集中高水準：需要抑制・タンス預金化が持続';}
+  else if(!ec){vEl.className='verdict vwarn';vEl.textContent='⚠️ E≥C：αを下げることを推奨';}
+  else{vEl.className='verdict stable';vEl.textContent='✅ 安定成長（E<C 成立）';}
+
+  drawChart('chart1',[
+    {data:h.C,color:'#4a9eff'},
+    {data:h.K,color:'#50c878'},
+    {data:h.Y,color:'#f0a500'},
+    {data:h.E,color:'#e05555'},
+    {data:h.cons,color:'#4af0d0',dash:[5,4],thin:true},
+  ],p.T);
+  drawChart('chart2',[
+    {data:h.seff,color:'#a78bfa'},
+    {data:h.Phi,color:'#f0a500'},
+    {data:h.dK,color:'#e05555'},
+  ],p.T);
+}
+
+runSim();
+</script>
+</body>
+</html>

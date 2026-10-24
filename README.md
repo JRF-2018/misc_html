@@ -1,6 +1,6 @@
 # misc_html - HTML や PDF など雑多なファイル置き場
 
-<!-- Time-stamp: "2026-05-25T02:29:10Z" -->
+<!-- Time-stamp: "2026-10-24T04:04:51Z" -->
 
 ここには、主に AI さん達に作ってもらった HTML (with JS)のシミュレーションや、PDF を置いていきます
 
@@ -29,16 +29,18 @@
 
   * <a href="https://jrf-2018.github.io/misc_html/credit_simulation_202602/credit_simulation.html">Claude さんのシミュレーション v1 (HTML with JavaScript)</a>、v1 のレポートはなし。
 
-  * <a href="https://jrf-2018.github.io/misc_html/credit_simulation_202602/credit_simulation_v2.html">Claude さんのシミュレーション v2 (HTML with JavaScript)</a> ＆ <a href="credit_simulation_202602/simulation_analysis.md">レポート v2 (Markdown)。
+  * <a href="https://jrf-2018.github.io/misc_html/credit_simulation_202602/credit_simulation_v2.html">Claude さんのシミュレーション v2 (HTML with JavaScript)</a> ＆ <a href="credit_simulation_202602/simulation_analysis.md">レポート v2 (Markdown)</a>。
 
-  * <a href="https://jrf-2018.github.io/misc_html/credit_simulation_202602/credit_simulation_v3.html">Claude さんのシミュレーション v3 (HTML with JavaScript)</a> ＆ <a href="credit_simulation_202602/simulation_v3_analysis.md">レポート v3 (Markdown)。
+  * <a href="https://jrf-2018.github.io/misc_html/credit_simulation_202602/credit_simulation_v3.html">Claude さんのシミュレーション v3 (HTML with JavaScript)</a> ＆ <a href="credit_simulation_202602/simulation_v3_analysis.md">レポート v3 (Markdown)</a>。
 
-  * <a href="https://jrf-2018.github.io/misc_html/credit_simulation_202602/credit_simulation_v4.html">Claude さんのシミュレーション v4 (HTML with JavaScript)</a> ＆ <a href="credit_simulation_202602/credit_v4_analysis.md">レポート v4 (Markdown)。
+  * <a href="https://jrf-2018.github.io/misc_html/credit_simulation_202602/credit_simulation_v4.html">Claude さんのシミュレーション v4 (HTML with JavaScript)</a> ＆ <a href="credit_simulation_202602/credit_v4_analysis.md">レポート v4 (Markdown)</a>。
 
-  * <a href="https://jrf-2018.github.io/misc_html/credit_simulation_202602/credit_simulation_v5.html">Claude さんのシミュレーション v5 (HTML with JavaScript)</a> ＆ <a href="credit_simulation_202602/simulation_v5_analysis.md">レポート v5 (Markdown)。
+  * <a href="https://jrf-2018.github.io/misc_html/credit_simulation_202602/credit_simulation_v5.html">Claude さんのシミュレーション v5 (HTML with JavaScript)</a> ＆ <a href="credit_simulation_202602/simulation_v5_analysis.md">レポート v5 (Markdown)</a>。
+
+  * Claude さんのシミュレーション v6 は、独立したリポジトリ→<a href="https://github.com/JRF-2018/credit_simulation_v6">信用創造ダイナミクス v6(信用循環モデル)</a>に v5 の解説 ipynb などと共にあります。
 
 
-## Author
+## Author (文責)
 
 JRF ( http://jrf.cocolog-nifty.com/statuses , Twitter (X): @jion_rockford )
 
